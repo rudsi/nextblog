@@ -10,7 +10,7 @@ if (!dbUrl) {
 console.log("Connecting to database with URL provided")
 
 const client = postgres(dbUrl, {
-  ssl: process.env.NODE_ENV === "production" ? "require" : false,
+  ssl: "require",
   max: 1,
 })
 

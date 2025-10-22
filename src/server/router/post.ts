@@ -7,15 +7,17 @@ import { posts } from "../db/schema"
 export const postRouter = router({
  
     getAll: procedure.query(async () => {
-        try {
-            const result = await db.select().from(posts).orderBy(desc(posts.created_at))
-            console.log("Query successful, returned", result.length, "posts")
-            return result
-        } catch (error) {
-            console.error("getAll query failed:", error instanceof Error ? error.message : error)
-            throw error
-        }
-    }),
+  try {
+    console.log("Fetching posts...")
+    const result = await db.select().from(posts).orderBy(desc(posts.created_at))
+    console.log(`Success: ${result.length} posts fetched`)
+    return result
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error(`Database error: ${msg}`)
+    throw new Error(`Failed to fetch posts: ${msg}`)
+  }
+}),
     
     getAllPaginated: procedure
     .input(
