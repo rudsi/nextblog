@@ -7,7 +7,14 @@ import { posts } from "../db/schema"
 export const postRouter = router({
  
     getAll: procedure.query(async () => {
-        return await db.select().from(posts).orderBy(desc(posts.created_at))
+        try {
+            const result = await db.select().from(posts).orderBy(desc(posts.created_at))
+            console.log("Query successful, returned", result.length, "posts")
+            return result
+        } catch (error) {
+            console.error("getAll query failed:", error instanceof Error ? error.message : error)
+            throw error
+        }
     }),
     
     getAllPaginated: procedure
