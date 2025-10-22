@@ -12,7 +12,7 @@ export default function MainPost({ post }: MainPostProps) {
     <Link href={`/view-post/${post.slug}`}>
       <div className="px-0 flex flex-col bg-white rounded-2xl overflow-hidden cursor-pointer transition-shadow">
         <img
-          src={post.image_url}
+          src={post.image_url || "https://via.placeholder.com/400x300?text=No+Image"}
           alt={post.title}
           className="w-full h-80 md:h-120 object-cover rounded-2xl"
         />

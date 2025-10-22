@@ -11,7 +11,7 @@ export default function SidePost({ post }: SidePostProps) {
       <div className="flex flex-row bg-white rounded-xl overflow-hidden w-full md:w-[90%] cursor-pointer transition-shadow">
         
         <img
-          src={post.image_url}
+          src={post.image_url || "https://via.placeholder.com/400x300?text=No+Image"}
           alt={post.title}
           className="w-1/2 h-64 object-cover rounded-2xl"
         />

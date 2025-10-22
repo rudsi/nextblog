@@ -5,8 +5,8 @@ export type Post = {
   description: string
   content: string
   author: string
-  image_url?: string
-  tags?: string[]
+  image_url: string | null
+  tags: string[] | null
   created_at: string
   updated_at: string
 }

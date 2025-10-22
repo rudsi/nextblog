@@ -1,14 +1,13 @@
 import { procedure, router } from "../trpc"
 import { z } from "zod"
-import { supabase } from "@/lib/supabase"
-import { Post } from "@/types/post"
+import { eq, desc } from "drizzle-orm"
+import { db } from "@/lib/supabase"
+import { posts } from "../db/schema"
 
 export const postRouter = router({
  
     getAll: procedure.query(async () => {
-        const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false })
-        if (error) throw new Error(error.message)
-        return data
+        return await db.select().from(posts).orderBy(desc(posts.created_at))
     }),
     
     getAllPaginated: procedure
@@ -19,30 +18,27 @@ export const postRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const { data, error } = await supabase
-        .from("posts")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range((input.page - 1) * input.limit, input.page * input.limit - 1)
-
-      if (error) throw new Error(error.message)
-      return data
+      const offset = (input.page - 1) * input.limit
+      return await db
+        .select()
+        .from(posts)
+        .orderBy(desc(posts.created_at))
+        .limit(input.limit)
+        .offset(offset)
     }),
 
     getBySlug: procedure
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
-      const { data, error } = await supabase
-        .from("posts")
-        .select("*")
-        .eq("slug", input.slug)
-        .single()
-
-        if (error) throw new Error(error.message)
-      return data
+      const result = await db
+        .select()
+        .from(posts)
+        .where(eq(posts.slug, input.slug))
+      
+      return result[0]
     }),
 
-   create: procedure
+    create: procedure
     .input(
       z.object({
         title: z.string(),
@@ -55,14 +51,11 @@ export const postRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const { data, error } = await supabase.from("posts").insert([input]).select()
-        if (error) throw new Error(error.message)
-        if(!data) throw new Error("Failed to create post")
-      return data[0]
+      const result = await db.insert(posts).values(input).returning()
+      return result[0]
     }),
    
-   
-update: procedure
+    update: procedure
     .input(
       z.object({
         slug: z.string(),
@@ -77,28 +70,23 @@ update: procedure
       })
     )
     .mutation(async ({ input }) => {
-      const { data, error } = await supabase
-        .from("posts")
-        .update(input.data)
-        .eq("slug", input.slug)
-        .select()
-        .single()
-
-      if (error) throw new Error(error.message)
-      return data
+      const result = await db
+        .update(posts)
+        .set(input.data)
+        .where(eq(posts.slug, input.slug))
+        .returning()
+      
+      return result[0]
     }),
 
-   delete: procedure
+    delete: procedure
     .input(z.object({ slug: z.string() }))
     .mutation(async ({ input }) => {
-      const { data, error } = await supabase
-        .from("posts")
-        .delete()
-        .eq("slug", input.slug)
-        .select()
-        .single()
-
-      if (error) throw new Error(error.message)
-      return data
+      const result = await db
+        .delete(posts)
+        .where(eq(posts.slug, input.slug))
+        .returning()
+      
+      return result[0]
     }),
 })
