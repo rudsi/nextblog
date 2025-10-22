@@ -1,7 +1,7 @@
-import { pgTable, serial, text, timestamp, text as textArray } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, text as textArray, bigserial } from "drizzle-orm/pg-core"
 
 export const posts = pgTable("posts", {
-  id: serial("id").primaryKey(),
+  id: bigserial({mode: "bigint"}).primaryKey(),
   title: text("title").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description").notNull(),
