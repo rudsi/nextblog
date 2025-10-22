@@ -3,26 +3,51 @@
 import { useState } from "react"
 import { trpc } from "@/lib/trpc"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+
+const AVAILABLE_TAGS = [
+  "React",
+  "Next.js",
+  "TypeScript",
+  "JavaScript",
+  "CSS",
+  "Web Development",
+  "Frontend",
+  "Backend",
+  "Database",
+  "DevOps",
+  "Tutorial",
+  "Tips & Tricks",
+  "Best Practices",
+  "Performance",
+  "Security",
+]
 
 export default function CreatePostPage() {
-    const router = useRouter()
-    const utils = trpc.useUtils();
-  const createPost = trpc.post.create.useMutation({
-        onSuccess: async () => {
-          await utils.post.getAll.invalidate();
-          router.push("/")
-        },
-  })
+  const router = useRouter()
+  const utils = trpc.useUtils()
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [content, setContent] = useState("")
   const [author, setAuthor] = useState("")
   const [imageUrl, setImageUrl] = useState("")
-  const [tags, setTags] = useState("")
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
 
- 
+  const createPost = trpc.post.create.useMutation({
+    onSuccess: async () => {
+      await utils.post.getAll.invalidate()
+      router.push("/")
+    },
+  })
+
   const slug = title.trim().toLowerCase().replace(/\s+/g, "-")
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    )
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,12 +58,12 @@ export default function CreatePostPage() {
       content,
       author,
       image_url: imageUrl,
-      tags: tags.split(",").map((t) => t.trim()),
+      tags: selectedTags,
     })
   }
 
   return (
-    <div className="max-w-xl mx-auto mt-16 p-6 bg-white dark:bg-gray-900 rounded-lg shadow-md">
+    <div className="max-w-3xl mx-auto mt-16 p-6 bg-white dark:bg-gray-900 rounded-lg shadow-md">
       <h1 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
         Create Post
       </h1>
@@ -88,20 +113,41 @@ export default function CreatePostPage() {
           required
         />
 
-        <input
-          type="text"
-          placeholder="Tags (comma separated)"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Select Tags
+          </label>
+          <div className="flex flex-wrap gap-2 p-3 border rounded-md bg-gray-50 dark:bg-gray-800">
+            {AVAILABLE_TAGS.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => handleTagToggle(tag)}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  selectedTags.includes(tag)
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600"
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+          {selectedTags.length > 0 && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+              Selected: {selectedTags.join(", ")}
+            </p>
+          )}
+        </div>
 
-        <button
-          type="submit"
-          className="w-full py-2 bg-purple-600 text-white font-medium rounded-md hover:bg-purple-700 transition-colors"
-        >
-          Create Post
-        </button>
+        <div className="flex justify-center">
+  <Button
+    variant="default"
+    disabled={createPost.isPending}
+  >
+    {createPost.isPending ? "Creating..." : "Create Post"}
+  </Button>
+</div>
       </form>
     </div>
   )

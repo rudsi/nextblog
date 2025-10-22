@@ -24,15 +24,10 @@ export default function Hero() {
       <div className="flex justify-start mb-8">
         <h2 className="text-3xl font-bold text-gray-900">Recent Posts</h2>
       </div>
-
-      {/* Posts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 min-h-[65vh] gap-8">
-        {/* Main Post */}
         <div className="flex flex-col justify-start space-y-6 items-start">
           <MainPost post={mostRecentPost} />
         </div>
-
-        {/* Side Posts */}
         <div className="flex flex-col justify-start space-y-6 items-center">
           {sidePosts.map((post) => (
             <SidePost key={post.id} post={post} />

@@ -3,6 +3,7 @@
 import { trpc } from "@/lib/trpc"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export default function ViewPostPage() {
   const params = useParams()
@@ -38,14 +39,10 @@ export default function ViewPostPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Back Button */}
         <Link href="/" className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mb-8">
           <span className="mr-2">←</span> Back
         </Link>
-
-        {/* Main Content */}
         <article className="bg-white dark:bg-gray-900 rounded-lg shadow-sm p-8">
-          {/* Featured Image */}
           {post.image_url && (
             <img
               src={post.image_url}
@@ -54,18 +51,16 @@ export default function ViewPostPage() {
             />
           )}
 
-          {/* Header */}
           <header className="mb-8 border-b border-gray-200 dark:border-gray-800 pb-8">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
               {post.title}
             </h1>
 
-            {/* Meta Information */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex flex-wrap items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
               <span className="font-semibold text-purple-600 dark:text-purple-400">
                 {post.author}
               </span>
-              <span>•</span>
+              <span className="w-1 h-1 bg-purple-600 rounded-full mx-1"></span>
               <time>
                 {new Date(post.created_at).toLocaleDateString("en-US", {
                   day: "numeric",
@@ -88,20 +83,17 @@ export default function ViewPostPage() {
               )}
             </div>
 
-            {/* Description */}
             <p className="text-lg text-gray-600 dark:text-gray-400 mt-4 italic">
               {post.description}
             </p>
           </header>
 
-          {/* Content */}
           <div className="prose dark:prose-invert max-w-none mb-8">
             <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
               {post.content}
             </div>
           </div>
 
-          {/* Tags */}
           {post.tags && post.tags.length > 0 && (
             <footer className="border-t border-gray-200 dark:border-gray-800 pt-8">
               <div className="flex flex-wrap gap-2">
@@ -115,14 +107,16 @@ export default function ViewPostPage() {
                 ))}
               </div>
 
-              {/* Edit Button */}
               <div className="mt-8">
-                <Link
+                <Button variant="outline">
+                  <Link
                   href={`/edit-post/${post.slug}`}
-                  className="inline-block px-6 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors"
                 >
-                  Edit Post
+                   Edit Post
+                   
                 </Link>
+                </Button>
+                
               </div>
             </footer>
           )}
