@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+---
 
-## Getting Started
+## Directory Breakdown
 
-First, run the development server:
+### **`app/`**
+- Contains all UI and routing logic.
+- Uses the Next.js 15 App Router.
+- Components are organized for clear separation of concerns.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+#### `layout.tsx`
+Defines the base layout structure shared across all pages.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+#### `page.tsx`
+Home page that renders primary content sections like the hero, Header and paginationSection list.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+#### `components/`
+- `Initializer.tsx` — initializes the global state from backend data.
+- `Hero.tsx` — displays the featured post and a few recent posts.
+- `MainPost.tsx` — displays the highlighted post with full details.
+- `SidePost.tsx` — renders smaller post cards for recent or related posts.
+- `PaginationSection.tsx` — handles pagination of the posts list.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+### **`lib/`**
 
-To learn more about Next.js, take a look at the following resources:
+Holds reusable client-side utilities.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+#### `trpc.ts`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Sets up the tRPC client for type-safe API calls.
 
-## Deploy on Vercel
+#### `store.ts`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Defines the Zustand global store for holding posts and categories across the app.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+### **`server/`**
+
+Contains all backend logic including database access and API routing.
+
+#### `supabase.ts`
+
+Initializes the drizzle client for interacting with the supabase based postgreSQL database.
+
+#### `trpc/`
+
+Contains all tRPC routers used to fetch and mutate data.
+
+- `post.ts` — handles CRUD operations for blog posts.
+- `category.ts` — manages blog categories.
+- `router.ts` — combines all individual routers into a single tRPC app router.
+
+---
+
+### **`db/`**
+
+Contains the database schema and migration files.
+
+#### `schema.ts`
+
+Defines database models, relationships, and types for Prisma and PostgreSQL.
+
+---
+
+## Architectural Layers
+
+1. **Frontend (Next.js + Zustand)**  
+   Responsible for rendering pages, managing client-side state, and presenting fetched data.
+
+2. **API Layer (tRPC)**  
+   Serves as the bridge between frontend and backend with end-to-end type safety.
+
+3. **Data Layer (drizzle + supabase)**  
+   Manages structured data storage, migrations, and relations between entities.
+
+---
+
+## Data Flow Summary
+
+1. The **frontend** triggers a tRPC query (e.g., `post.getAll`).
+2. The **tRPC router** handles the request, fetching data via Prisma.
+3. The **drizzle client** queries PostgreSQL and returns results.
+4. The **tRPC layer** sends typed data back to the client.
+5. The **Initializer** stores it in **Zustand** for global access.
+6. UI components like `Hero` and `SidePost` render using the Zustand state.
+
+---
+
+## Styling and Design
+
+- **Tailwind CSS** provides utility-first responsive design.
+- **shadcn/ui** adds modern pre-styled UI components.
+- The layout is minimal, content-focused, and mobile-friendly.
+
+---
+
+## Development Workflow
+
+| Task                     | Command                                            |
+| ------------------------ | -------------------------------------------------- |
+| Install dependencies     | `npm install`                                      |
+| Run drizzle migrations   | `npx drizzle-kit generate && npx drizzle-kit push` |
+| Start development server | `npm run dev`                                      |
+| Build for production     | `npm run build`                                    |
+
+---
+
+## Deployment Ready
+
+- deployed on vercel
+
+---
+
+## Author
+
+**Rudra Pratap Singh**
+
+---
