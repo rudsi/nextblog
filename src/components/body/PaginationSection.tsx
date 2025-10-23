@@ -12,66 +12,90 @@ import {
 } from "@/components/ui/pagination"
 import { trpc } from "@/lib/trpc"
 import BodyPost from "./BodyPost"
-import { FilterIcon, X } from "lucide-react"
+import { FilterIcon } from "lucide-react"
+import { Post } from "@/types/post"
+import { categories } from "@/server/db/schema"
+
+type PostWithCategories = Post & { categoryIds: string[] }
 
 export default function PaginationSection() {
   const [page, setPage] = useState(1)
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [showFilter, setShowFilter] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState("")
   const limit = 6
 
-  const { data: allPosts, isLoading, error } = trpc.post.getAll.useQuery()
+  const { data: allPostsData, isLoading: postsLoading, error: postsError } =
+    trpc.post.getAll.useQuery()
+  const { data: allCategories, refetch: refetchCategories } = trpc.category.getAll.useQuery()
 
-  const availableTags = useMemo(() => {
-    if (!allPosts) return []
-    const tags = new Set<string>()
-    allPosts.forEach((post) => {
-      post.tags?.forEach((tag:string) => tags.add(tag))
-    })
-    return Array.from(tags).sort()
-  }, [allPosts])
+  const createCategory = trpc.category.create.useMutation({
+    onSuccess: (category) => {
+      refetchCategories()
+      setSelectedCategories((prev) => [...prev, category.id])
+      setNewCategoryName("")
+    },
+  })
 
- 
-  const filteredPosts = useMemo(() => {
-    if (!allPosts) return []
-    if (selectedTags.length === 0) return allPosts
+  const handleAddCategory = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newCategoryName.trim()) return
+    createCategory.mutate({ name: newCategoryName.trim() })
+  }
 
-    return allPosts.filter((post) =>
-      selectedTags.some((tag) => post.tags?.includes(tag))
+  const toggleCategory = (id: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     )
-  }, [allPosts, selectedTags])
+    setPage(1)
+  }
 
- 
+  const clearFilters = () => {
+    setSelectedCategories([])
+    setPage(1)
+    setShowFilter(false)
+  }
+
+  const allPosts: PostWithCategories[] = useMemo(() => {
+    if (!allPostsData) return []
+    return allPostsData.map((p) => ({
+      ...p,
+      categoryIds: p.categoryIds ?? [],
+    }))
+  }, [allPostsData])
+
+  const filteredPosts = useMemo(() => {
+    if (selectedCategories.length === 0) return allPosts
+    return allPosts.filter((post) =>
+      post.categoryIds.some((catId) => selectedCategories.includes(catId))
+    )
+  }, [allPosts, selectedCategories])
+
   const paginatedPosts = useMemo(() => {
     const start = (page - 1) * limit
     const end = start + limit
     return filteredPosts.slice(start, end)
   }, [filteredPosts, page])
 
+   
+
   const totalPages = Math.ceil(filteredPosts.length / limit)
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+  if (postsLoading) return <div className="text-center py-10">Loading...</div>
+  if (postsError)
+    return (
+      <div className="text-center py-10 text-red-600">{postsError.message}</div>
     )
-    setPage(1)
-  }
-
-  const clearFilters = () => {
-    setSelectedTags([])
-    setPage(1)
-    setShowFilter(false)
-  }
-
-  if (isLoading) return <div className="text-center py-10">Loading...</div>
-  if (error) return <div className="text-center py-10 text-red-600">{error.message}</div>
-  if (!allPosts || allPosts.length === 0) return <div className="text-center py-10">No posts found</div>
+  if (!allPosts || allPosts.length === 0)
+    return <div className="text-center py-10">No posts found</div>
 
   return (
     <div className="w-full flex flex-col items-center mt-10">
       <div className="max-w-7xl w-full flex items-center justify-between mb-6 mx-auto px-4">
         <div className="flex items-center justify-center h-20">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">All blog Posts</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            All Blog Posts
+          </h2>
         </div>
 
         <button
@@ -83,11 +107,13 @@ export default function PaginationSection() {
         </button>
       </div>
 
-      {showFilter && (
+      {showFilter && allCategories && (
         <div className="max-w-7xl w-full mx-auto px-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filter by Tags</h3>
-            {selectedTags.length > 0 && (
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Filter by Category
+            </h3>
+            {selectedCategories.length > 0 && (
               <button
                 onClick={clearFilters}
                 className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 underline"
@@ -97,24 +123,40 @@ export default function PaginationSection() {
             )}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {availableTags.map((tag) => (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {allCategories.map((cat) => (
               <button
-                key={tag}
-                onClick={() => toggleTag(tag)}
+                key={cat.id}
+                onClick={() => toggleCategory(cat.id)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedTags.includes(tag)
+                  selectedCategories.includes(cat.id)
                     ? "bg-purple-600 text-white"
                     : "bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700"
                 }`}
               >
-                {tag}
+                {cat.name}
               </button>
             ))}
           </div>
 
-          {selectedTags.length > 0 && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">
+          <form onSubmit={handleAddCategory} className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="Add new category"
+              className="flex-1 px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+            <button
+              type="submit"
+              className="px-4 py-1 bg-purple-600 text-white rounded-lg"
+            >
+              Add
+            </button>
+          </form>
+
+          {selectedCategories.length > 0 && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
               Showing {paginatedPosts.length} of {filteredPosts.length} posts
             </p>
           )}
@@ -123,52 +165,53 @@ export default function PaginationSection() {
 
       {paginatedPosts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-7xl px-4 mb-8">
-          {paginatedPosts.map((post) => (
-            <div key={post.id}>
-              <BodyPost post={post} />
-            </div>
-          ))}
+          {paginatedPosts.map((post) => {
+          const categoryNames = post.categoryIds.map(
+          (id) => allCategories?.find((cat) => cat.id === id)?.name || id)
+          return <BodyPost key={post.id} post={{ ...post, categories: categoryNames }} />
+          })}
         </div>
       ) : (
         <div className="text-center py-12 w-full">
           <p className="text-gray-600 dark:text-gray-400">
-            No posts found with the selected tags
+            No posts found for the selected categories
           </p>
         </div>
       )}
-        <Pagination className="mt-8">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault()
-                  setPage((prev) => Math.max(prev - 1, 1))
-                }}
-              />
-            </PaginationItem>
 
-            <PaginationItem>
-              <PaginationLink href="#" onClick={(e) => e.preventDefault()}>
-                {page}
-              </PaginationLink>
-            </PaginationItem>
+      <Pagination className="mt-8">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                setPage((prev) => Math.max(prev - 1, 1))
+              }}
+            />
+          </PaginationItem>
 
-            <PaginationItem>
-              <PaginationEllipsis />
-            </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#" onClick={(e) => e.preventDefault()}>
+              {page}
+            </PaginationLink>
+          </PaginationItem>
 
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault()
-                  if (page < totalPages) setPage((prev) => prev + 1)
-                }}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+          <PaginationItem>
+            <PaginationEllipsis />
+          </PaginationItem>
+
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                if (page < totalPages) setPage((prev) => prev + 1)
+              }}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   )
 }

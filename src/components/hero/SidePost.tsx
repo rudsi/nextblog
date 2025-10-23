@@ -2,7 +2,7 @@ import Link from "next/link"
 import type { Post } from "../../types/post"
 
 interface SidePostProps {
-  post: Post
+  post: Post & { categories?: string[] }
 }
 
 export default function SidePost({ post }: SidePostProps) {
@@ -30,18 +30,18 @@ export default function SidePost({ post }: SidePostProps) {
           </div>
 
           <div className="flex flex-col">
-            <div className="text-gray-900 font-bold text-sm truncate">{post.title}</div>
+            <div className="flex flex-row text-gray-900 font-bold text-sm truncate">{post.title}</div>
             <div className="flex flex-row text-gray-500 text-xs line-clamp-2">{post.description}</div>
           </div>
 
     
           <div className="flex flex-wrap gap-1 mt-1">
-            {post.tags?.map((tag, idx) => (
+            {post.categories?.map((name, idx) => (
               <span
                 key={idx}
                 className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs"
               >
-                {tag}
+                {name}
               </span>
             ))}
           </div>

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Post } from "@/types/post"
 
 interface MainPostProps {
-  post: Post
+  post: Post & { categories?: string[] }
 }
 
 export default function MainPost({ post }: MainPostProps) {
@@ -35,12 +35,12 @@ export default function MainPost({ post }: MainPostProps) {
         </div>
 
         <div className="px-0 pb-0 flex flex-wrap gap-2">
-          {post.tags?.map((tag, idx) => (
+          {post.categories?.map((name, idx) => (
             <span
               key={idx}
               className="font-mono bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm"
             >
-              {tag}
+              {name}
             </span>
           ))}
         </div>

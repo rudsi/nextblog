@@ -1,19 +1,20 @@
 "use client"
 
 import { trpc } from "@/lib/trpc"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
 export default function ViewPostPage() {
   const params = useParams()
-  const router = useRouter()
   const slug = params.slug as string
 
   const { data: post, isLoading, error } = trpc.post.getBySlug.useQuery(
     { slug },
     { enabled: !!slug }
   )
+
+  const { data: allCategories } = trpc.category.getAll.useQuery()
 
   if (isLoading) {
     return (
@@ -36,12 +37,20 @@ export default function ViewPostPage() {
     )
   }
 
+  const categoryNames = post.categoryIds?.map(
+    (id) => allCategories?.find((c) => c.id === id)?.name || id
+  )
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        <Link href="/" className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mb-8">
+        <Link
+          href="/"
+          className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mb-8"
+        >
           <span className="mr-2">←</span> Back
         </Link>
+
         <article className="bg-white dark:bg-gray-900 rounded-lg shadow-sm p-8">
           {post.image_url && (
             <img
@@ -94,32 +103,26 @@ export default function ViewPostPage() {
             </div>
           </div>
 
-          {post.tags && post.tags.length > 0 && (
-            <footer className="border-t border-gray-200 dark:border-gray-800 pt-8">
+          {categoryNames && categoryNames.length > 0 && (
+            <footer className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-8">
               <div className="flex flex-wrap gap-2">
-                {post.tags.map((tag: string, idx: number) => (
+                {categoryNames.map((name, idx) => (
                   <span
                     key={idx}
                     className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full text-sm font-medium"
                   >
-                    {tag}
+                    {name}
                   </span>
                 ))}
               </div>
-
-              <div className="mt-8">
-                <Button variant="outline">
-                  <Link
-                  href={`/edit-post/${post.slug}`}
-                >
-                   Edit Post
-                   
-                </Link>
-                </Button>
-                
-              </div>
             </footer>
           )}
+
+          <div className="flex justify-center mt-6">
+            <Link href={`/edit-post/${post.slug}`}>
+              <Button variant="default">Edit Post</Button>
+            </Link>
+          </div>
         </article>
       </div>
     </div>

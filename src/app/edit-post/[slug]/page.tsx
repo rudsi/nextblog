@@ -4,44 +4,44 @@ import { useState, useEffect } from "react"
 import { trpc } from "@/lib/trpc"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export default function EditPostPage() {
   const router = useRouter()
   const params = useParams()
   const slug = params.slug as string
 
+  const utils = trpc.useUtils()
+
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [content, setContent] = useState("")
   const [author, setAuthor] = useState("")
   const [imageUrl, setImageUrl] = useState("")
-  const [tags, setTags] = useState("")
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [newCategoryName, setNewCategoryName] = useState("")
   const [loading, setLoading] = useState(true)
 
-  const utils = trpc.useUtils()
-
-  // Fetch the post
-  const { data: post } = trpc.post.getBySlug.useQuery({ slug }, {
-    enabled: !!slug,
-  })
-
-  // Update mutation
+  const { data: post } = trpc.post.getBySlug.useQuery({ slug }, { enabled: !!slug })
+  const { data: allCategories, refetch: refetchCategories } = trpc.category.getAll.useQuery()
   const updatePost = trpc.post.update.useMutation({
     onSuccess: async () => {
       await utils.post.getAll.invalidate()
       router.push("/")
     },
   })
-
-  // Delete mutation
   const deletePost = trpc.post.delete.useMutation({
     onSuccess: async () => {
       await utils.post.getAll.invalidate()
       router.push("/")
     },
   })
+  const createCategory = trpc.category.create.useMutation({
+    onSuccess: async () => {
+      await refetchCategories()
+    },
+  })
 
-  // Populate form when post loads
   useEffect(() => {
     if (post) {
       setTitle(post.title)
@@ -49,7 +49,7 @@ export default function EditPostPage() {
       setContent(post.content)
       setAuthor(post.author)
       setImageUrl(post.image_url || "")
-      setTags(post.tags?.join(", ") || "")
+      setSelectedCategories(post.categoryIds || [])
       setLoading(false)
     }
   }, [post])
@@ -64,7 +64,10 @@ export default function EditPostPage() {
         content: content !== post?.content ? content : undefined,
         author: author !== post?.author ? author : undefined,
         image_url: imageUrl !== post?.image_url ? imageUrl : undefined,
-        tags: tags !== post?.tags?.join(", ") ? tags.split(",").map((t) => t.trim()) : undefined,
+        categoryIds:
+          JSON.stringify(selectedCategories) !== JSON.stringify(post?.categoryIds)
+            ? selectedCategories
+            : undefined,
       },
     })
   }
@@ -75,30 +78,39 @@ export default function EditPostPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-        <div className="text-gray-600 dark:text-gray-400">Loading...</div>
-      </div>
+  const handleCategoryToggle = (id: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     )
   }
 
-  if (!post) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Post not found</p>
-          <Link href="/" className="text-purple-600 hover:text-purple-700">
-            Go back home
-          </Link>
-        </div>
-      </div>
-    )
+  const handleNewCategory = async () => {
+    if (!newCategoryName.trim()) return
+    const created = await createCategory.mutateAsync({ name: newCategoryName })
+    if (created?.id) {
+      setSelectedCategories((prev) => [...prev, created.id])
+      setNewCategoryName("")
+    }
   }
+
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+      <div className="text-gray-600 dark:text-gray-400">Loading...</div>
+    </div>
+  )
+
+  if (!post) return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-red-600 mb-4">Post not found</p>
+        <Link href="/" className="text-purple-600 hover:text-purple-700">Go back home</Link>
+      </div>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <Link href="/" className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mb-8">
           <span className="mr-2">←</span> Back
         </Link>
@@ -108,9 +120,7 @@ export default function EditPostPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Title
-              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
               <input
                 type="text"
                 value={title}
@@ -121,9 +131,7 @@ export default function EditPostPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Author
-              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Author</label>
               <input
                 type="text"
                 value={author}
@@ -134,9 +142,7 @@ export default function EditPostPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Image URL
-              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Image URL</label>
               <input
                 type="text"
                 value={imageUrl}
@@ -146,9 +152,7 @@ export default function EditPostPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Description
-              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -159,9 +163,7 @@ export default function EditPostPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Content
-              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content</label>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -172,33 +174,55 @@ export default function EditPostPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tags (comma separated)
-              </label>
-              <input
-                type="text"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Categories</label>
+              <div className="flex flex-wrap gap-2 p-3 border rounded-md bg-gray-50 dark:bg-gray-800 mb-2">
+                {allCategories?.map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => handleCategoryToggle(cat.id)}
+                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                      selectedCategories.includes(cat.id)
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600"
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+
+              {selectedCategories.length > 0 && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  Selected: {allCategories?.filter(cat => selectedCategories.includes(cat.id)).map(cat => cat.name).join(", ")}
+                </p>
+              )}
+
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="text"
+                  placeholder="New category name"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                />
+                <Button
+                  variant="default"
+                  onClick={handleNewCategory}
+                  disabled={!newCategoryName.trim() || createCategory.isPending}
+                >
+                  {createCategory.isPending ? "Adding..." : "Add"}
+                </Button>
+              </div>
             </div>
 
-            <div className="flex gap-3 pt-4">
-              <button
-                type="submit"
-                disabled={updatePost.isPending}
-                className="flex-1 px-6 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 disabled:bg-gray-400 transition-colors"
-              >
+            <div className="flex justify-center gap-3 pt-4">
+              <Button variant="default" disabled={updatePost.isPending}>
                 {updatePost.isPending ? "Updating..." : "Update Post"}
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deletePost.isPending}
-                className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 disabled:bg-gray-400 transition-colors"
-              >
+              </Button>
+              <Button type="button" variant="destructive" onClick={handleDelete} disabled={deletePost.isPending}>
                 {deletePost.isPending ? "Deleting..." : "Delete"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

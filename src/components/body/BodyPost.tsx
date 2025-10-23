@@ -2,9 +2,8 @@ import Link from "next/link"
 import { Post } from "@/types/post"
 
 interface BodyPostProps {
-  post: Post
+  post: Post & { categories?: string[] } // add categories prop
 }
- 
 
 export default function BodyPost({ post }: BodyPostProps) {
   return (
@@ -16,17 +15,17 @@ export default function BodyPost({ post }: BodyPostProps) {
           className="w-full h-60 md:h-55 object-cover rounded-2xl"
         />
 
-          <div className="px-0 py-3 flex items-center justify-between text-gray-500 text-sm">
-              <span className="font-mono text-purple-600 text-xs font-bold flex items-center">
-                  {post.author}
-                  <span className="w-1 h-1 bg-purple-600 rounded-full mx-1"></span>
-                  {new Date(post.created_at).toLocaleDateString("en-US", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                 })}
-              </span>
-          </div>
+        <div className="px-0 py-3 flex items-center justify-between text-gray-500 text-sm">
+          <span className="font-mono text-purple-600 text-xs font-bold flex items-center">
+            {post.author}
+            <span className="w-1 h-1 bg-purple-600 rounded-full mx-1"></span>
+            {new Date(post.created_at).toLocaleDateString("en-US", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </span>
+        </div>
 
         <div className="px-0 pb-4">
           <h2 className="text-sm font-bold text-gray-900 mb-2">{post.title}</h2>
@@ -34,12 +33,12 @@ export default function BodyPost({ post }: BodyPostProps) {
         </div>
 
         <div className="px-0 pb-0 flex flex-wrap gap-2">
-          {post.tags?.map((tag, idx) => (
+          {post.categories?.map((name, idx) => (
             <span
               key={idx}
               className="font-mono bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm"
             >
-              {tag}
+              {name}
             </span>
           ))}
         </div>
