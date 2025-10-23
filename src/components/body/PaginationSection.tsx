@@ -10,9 +10,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { trpc } from "@/lib/trpc"
 import BodyPost from "./BodyPost"
 import { FilterIcon } from "lucide-react"
+import { useStore } from "@/lib/store"
 import { Post } from "@/types/post"
 
 type PostWithCategories = Post & { categoryIds: string[] }
@@ -23,9 +23,9 @@ export default function PaginationSection() {
   const [showFilter, setShowFilter] = useState(false)
   const limit = 6
 
-  const { data: allPostsData, isLoading: postsLoading, error: postsError } =
-    trpc.post.getAll.useQuery()
-  const { data: allCategories } = trpc.category.getAll.useQuery()
+   
+  const allPostsData = useStore((state) => state.posts)
+  const allCategories = useStore((state) => state.categories)
 
   const toggleCategory = (id: string) => {
     setSelectedCategories((prev) =>
@@ -40,6 +40,7 @@ export default function PaginationSection() {
     setShowFilter(false)
   }
 
+ 
   const allPosts: PostWithCategories[] = useMemo(() => {
     if (!allPostsData) return []
     return allPostsData.map((p) => ({
@@ -63,13 +64,11 @@ export default function PaginationSection() {
 
   const totalPages = Math.ceil(filteredPosts.length / limit)
 
-  if (postsLoading) return <div className="text-center py-10">Loading...</div>
-  if (postsError)
-    return (
-      <div className="text-center py-10 text-red-600">{postsError.message}</div>
-    )
   if (!allPosts || allPosts.length === 0)
     return <div className="text-center py-10">No posts found</div>
+
+  if (!allCategories || allCategories.length === 0)
+    return <div className="text-center py-10">Loading categories...</div>
 
   return (
     <div className="w-full flex flex-col items-center mt-10">
@@ -89,7 +88,7 @@ export default function PaginationSection() {
         </button>
       </div>
 
-      {showFilter && allCategories && (
+      {showFilter && (
         <div className="max-w-7xl w-full mx-auto px-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -133,7 +132,7 @@ export default function PaginationSection() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-7xl px-4 mb-8">
           {paginatedPosts.map((post) => {
             const categoryNames = post.categoryIds.map(
-              (id) => allCategories?.find((cat) => cat.id === id)?.name || id
+              (id) => allCategories.find((cat) => cat.id === id)?.name || id
             )
             return <BodyPost key={post.id} post={{ ...post, categories: categoryNames }} />
           })}

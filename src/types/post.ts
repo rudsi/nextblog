@@ -16,3 +16,9 @@ export type PostWithCategories = {
   categoryIds: string[]
 }
 
+export interface Category {
+  id: string
+  name: string
+  slug: string
+  description?: string
+}

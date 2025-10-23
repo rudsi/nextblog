@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Post } from "@/types/post"
 
 interface BodyPostProps {
-  post: Post & { categories?: string[] } // add categories prop
+  post: Post & { categories?: string[] }  
 }
 
 export default function BodyPost({ post }: BodyPostProps) {
@@ -18,7 +18,7 @@ export default function BodyPost({ post }: BodyPostProps) {
         <div className="px-0 py-3 flex items-center justify-between text-gray-500 text-sm">
           <span className="font-mono text-purple-600 text-xs font-bold flex items-center">
             {post.author}
-            <span className="w-1 h-1 bg-purple-600 rounded-full mx-1"></span>
+              <span className="w-1 h-1 bg-purple-600 rounded-full mx-1"></span>
             {new Date(post.created_at).toLocaleDateString("en-US", {
               day: "numeric",
               month: "long",

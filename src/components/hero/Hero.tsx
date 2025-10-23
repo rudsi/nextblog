@@ -1,17 +1,17 @@
 "use client"
 
+import { useStore } from "@/lib/store"
 import MainPost from "./MainPost"
 import SidePost from "./SidePost"
-import { trpc } from "@/lib/trpc"
 
 export default function Hero() {
-  const { data: posts, isLoading, error } = trpc.post.getAll.useQuery()
-  const { data: allCategories } = trpc.category.getAll.useQuery() // fetch categories
+ 
+  const posts = useStore((state) => state.posts)
+  const allCategories = useStore((state) => state.categories)
 
-  if (isLoading) return <div>Loading...</div>
-  if (error) return <div>{error.message}</div>
   if (!posts || posts.length === 0) return <div>No posts found</div>
-  if (!allCategories) return <div>Loading categories...</div>
+  if (!allCategories || allCategories.length === 0)
+    return <div>Loading categories...</div>
 
   const sortedPosts = [...posts].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -20,20 +20,19 @@ export default function Hero() {
   const [mostRecentPost, ...otherPosts] = sortedPosts
   const sidePosts = otherPosts.slice(0, 2)
 
-const mainPostWithCategories = {
-  ...mostRecentPost,
-  categories: (mostRecentPost.categoryIds ?? []).map(
-    (id) => allCategories.find((cat) => cat.id === id)?.name || id
-  ),
-}
+  const mainPostWithCategories = {
+    ...mostRecentPost,
+    categories: (mostRecentPost.categoryIds ?? []).map(
+      (id) => allCategories.find((cat) => cat.id === id)?.name || id
+    ),
+  }
 
-const sidePostsWithCategories = sidePosts.map((post) => ({
-  ...post,
-  categories: (post.categoryIds ?? []).map(
-    (id) => allCategories.find((cat) => cat.id === id)?.name || id
-  ),
-}))
-
+  const sidePostsWithCategories = sidePosts.map((post) => ({
+    ...post,
+    categories: (post.categoryIds ?? []).map(
+      (id) => allCategories.find((cat) => cat.id === id)?.name || id
+    ),
+  }))
 
   return (
     <section className="max-w-7xl mx-auto mt-12">
@@ -46,7 +45,7 @@ const sidePostsWithCategories = sidePosts.map((post) => ({
         </div>
         <div className="flex flex-col justify-start space-y-6 items-center">
           {sidePostsWithCategories.map((post) => (
-            <SidePost key={post.id} post={post}  />
+            <SidePost key={post.id} post={post} />
           ))}
         </div>
       </div>
