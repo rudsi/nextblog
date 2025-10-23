@@ -68,7 +68,7 @@ export default function PaginationSection() {
   if (!allPosts || allPosts.length === 0) return <div className="text-center py-10">No posts found</div>
 
   return (
-    <div className="w-full flex flex-col items-center">
+    <div className="w-full flex flex-col items-center mt-10">
       <div className="max-w-7xl w-full flex items-center justify-between mb-6 mx-auto px-4">
         <div className="flex items-center justify-center h-20">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">All blog Posts</h2>

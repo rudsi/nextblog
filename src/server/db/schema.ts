@@ -1,6 +1,3 @@
-
- 
- 
 import { sql } from "drizzle-orm"
 import { pgTable, text, timestamp, text as textArray, bigserial, serial, integer, uuid} from "drizzle-orm/pg-core"
 

@@ -4,7 +4,7 @@ import PaginationSection from "@/components/body/PaginationSection";
 
 export default function Home() {
   return (
-    <div className="gap-5">
+    <div className="gap-20">
       <Header />
       <Hero />
       <PaginationSection />  
