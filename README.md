@@ -20,7 +20,9 @@ Home page that renders primary content sections like the hero, Header and pagina
 - `Hero.tsx` — displays the featured post and a few recent posts.
 - `MainPost.tsx` — displays the highlighted post with full details.
 - `SidePost.tsx` — renders smaller post cards for recent or related posts.
+- `BodyPost.tsx` — renders smaller post cards for all posts section.
 - `PaginationSection.tsx` — handles pagination of the posts list.
+- `Header.tsx` — displays the home and create post button on the header section.
 
 ### **`lib/`**
 
