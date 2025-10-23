@@ -1,26 +1,26 @@
----
-
 ## Directory Breakdown
 
 ### **`app/`**
+
 - Contains all UI and routing logic.
 - Uses the Next.js 15 App Router.
 - Components are organized for clear separation of concerns.
 
 #### `layout.tsx`
+
 Defines the base layout structure shared across all pages.
 
 #### `page.tsx`
+
 Home page that renders primary content sections like the hero, Header and paginationSection list.
 
 #### `components/`
+
 - `Initializer.tsx` — initializes the global state from backend data.
 - `Hero.tsx` — displays the featured post and a few recent posts.
 - `MainPost.tsx` — displays the highlighted post with full details.
 - `SidePost.tsx` — renders smaller post cards for recent or related posts.
 - `PaginationSection.tsx` — handles pagination of the posts list.
-
----
 
 ### **`lib/`**
 
@@ -34,15 +34,15 @@ Sets up the tRPC client for type-safe API calls.
 
 Defines the Zustand global store for holding posts and categories across the app.
 
+#### `supabase.ts`
+
+Initializes the drizzle client for interacting with the supabase based postgreSQL database.
+
 ---
 
 ### **`server/`**
 
 Contains all backend logic including database access and API routing.
-
-#### `supabase.ts`
-
-Initializes the drizzle client for interacting with the supabase based postgreSQL database.
 
 #### `trpc/`
 
