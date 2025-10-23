@@ -14,7 +14,6 @@ import { trpc } from "@/lib/trpc"
 import BodyPost from "./BodyPost"
 import { FilterIcon } from "lucide-react"
 import { Post } from "@/types/post"
-import { categories } from "@/server/db/schema"
 
 type PostWithCategories = Post & { categoryIds: string[] }
 
@@ -22,26 +21,11 @@ export default function PaginationSection() {
   const [page, setPage] = useState(1)
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [showFilter, setShowFilter] = useState(false)
-  const [newCategoryName, setNewCategoryName] = useState("")
   const limit = 6
 
   const { data: allPostsData, isLoading: postsLoading, error: postsError } =
     trpc.post.getAll.useQuery()
-  const { data: allCategories, refetch: refetchCategories } = trpc.category.getAll.useQuery()
-
-  const createCategory = trpc.category.create.useMutation({
-    onSuccess: (category) => {
-      refetchCategories()
-      setSelectedCategories((prev) => [...prev, category.id])
-      setNewCategoryName("")
-    },
-  })
-
-  const handleAddCategory = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newCategoryName.trim()) return
-    createCategory.mutate({ name: newCategoryName.trim() })
-  }
+  const { data: allCategories } = trpc.category.getAll.useQuery()
 
   const toggleCategory = (id: string) => {
     setSelectedCategories((prev) =>
@@ -76,8 +60,6 @@ export default function PaginationSection() {
     const end = start + limit
     return filteredPosts.slice(start, end)
   }, [filteredPosts, page])
-
-   
 
   const totalPages = Math.ceil(filteredPosts.length / limit)
 
@@ -139,22 +121,6 @@ export default function PaginationSection() {
             ))}
           </div>
 
-          <form onSubmit={handleAddCategory} className="flex gap-2 mb-2">
-            <input
-              type="text"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              placeholder="Add new category"
-              className="flex-1 px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            <button
-              type="submit"
-              className="px-4 py-1 bg-purple-600 text-white rounded-lg"
-            >
-              Add
-            </button>
-          </form>
-
           {selectedCategories.length > 0 && (
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
               Showing {paginatedPosts.length} of {filteredPosts.length} posts
@@ -166,9 +132,10 @@ export default function PaginationSection() {
       {paginatedPosts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-7xl px-4 mb-8">
           {paginatedPosts.map((post) => {
-          const categoryNames = post.categoryIds.map(
-          (id) => allCategories?.find((cat) => cat.id === id)?.name || id)
-          return <BodyPost key={post.id} post={{ ...post, categories: categoryNames }} />
+            const categoryNames = post.categoryIds.map(
+              (id) => allCategories?.find((cat) => cat.id === id)?.name || id
+            )
+            return <BodyPost key={post.id} post={{ ...post, categories: categoryNames }} />
           })}
         </div>
       ) : (
